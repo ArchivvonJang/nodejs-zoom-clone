@@ -23,39 +23,40 @@ const server = http.createServer(app);
 
 //websocket server 생성  
 //http server를 사용하고 싶지 않을 때는 websocket server(아래)만 만들면 된다.
-                                    // 여기서 서버를 전달해준다. 
+// 여기서 서버를 전달해준다.
 const wss = new WebSocket.Server({ server });
 
 function onSocketClose(){
-    console.log("Disconnected from the Browser");
+  console.log("[Back] Disconnected from the Browser");
 }
 
-//fake database 누군가 서버에 연결하면 해당 connection을 담아준다.
+//fake database 누군가 서버에 연결하면 해당 connection 담아준다.
 const sockets = [];
 
 wss.on("connection", (socket) => {
-    sockets.push(socket);
-    socket["nickname"] = "Anony"; //익명으로 챗에 참여한 사람들의 닉네임을 설정
-    console.log("✅ Connected to Browser");
-    socket.on("close", onSocketClose);
-    socket.on("message", (msg) => {
+  //브라우저에 연결될 때, 브라우저를 sockets array 에 담아준다.
+  sockets.push(socket);
 
-        //JSON.stringify : convert javascript object to String
-        const message = JSON.parse(msg);
+  socket["nickname"] = "Anony"; //익명으로 챗에 참여한 사람들의 닉네임을 설정
+  console.log("[Back] ✅ Connected to Browser");
+  socket.on("close", onSocketClose);
+  socket.on("message", (msg) => {
 
-        switch(message.type){
-            case "new_message":
-                sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
-                break;
-            case "nickname":
-                //type : 메시지 종류, payload : 메시지에 담겨있는 중요한 정보들
-                //socket[여기에 정보를 저장할 수 있다. ]
-                socket["nickname"] = message.payload;
-                break;
-        }
-    
-        
-    });
+    //JSON.stringify : convert javascript object to String
+    const message = JSON.parse(msg);
+
+    switch(message.type){
+      case "new_message":
+        //각 브라우저를 aSocket 으로 표시하고 메시지를 보낸다.
+        sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
+        break;
+      case "nickname":
+        //type : 메시지 종류, payload : 메시지에 담겨있는 중요한 정보들
+        //socket[여기에 정보를 저장할 수 있다. ]
+        socket["nickname"] = message.payload;
+        break;
+    }
+  });
 });
 
 server.listen(3000, handleListen);
