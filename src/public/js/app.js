@@ -1,64 +1,19 @@
+const socket = io(); //io 자동적으로 back-end와 socket-io를 연결해주는 function
+//화면 가져오기
+const welcom = document.getElementById("welcome");
+const form = welcom.querySelector("form");
 
-const messageList = document.querySelector('ul');
-const messageForm = document.querySelector('#message');
-const nickForm = document.querySelector('#nick');
-//frontend의 socket : 서버로의 연결
-const socket = new WebSocket(`ws://${window.location.host}`);
-
-//메시지를 만들고 stringify 해주는 함수
-//JSON object -> String
-function makeMessage(type, payload){
-  const msg = {type, payload}
-  return JSON.stringify(msg);
-}
-
-
-function handleOpen(){
-  console.log("[Front] ✅ Connected to Server");
-}
-
-//open
-socket.addEventListener("open", handleOpen);
-
-
-//message
-socket.addEventListener("message", (message)=>{
-  //message를 ul안에 넣어주기!
-  const li = document.createElement("li");
-  li.innerText = message.data;
-  messageList.append(li);
-});
-
-//close
-socket.addEventListener("close", ()=>{
-  console.log("[Front] Disconnected to Server")
-})
-
-//send a message to backend
-function handleSubmit(event){
+function handleRoomSubmit(event){
   event.preventDefault();
-  const input = messageForm.querySelector("input");
-  //                                  type, payload
-  socket.send(makeMessage("new_message", input.value));
-
-  //message를 ul안에 넣어주기!
-  /*  const li = document.createElement("li");
-    li.innerText = `You: ${input.value}`;
-    messageList.append(li);
-    input.value="";*/
-}
-
-function handleNickSubmit(event){
-  event.preventDefault();
-  const input = nickForm.querySelector("input");
-  socket.send(makeMessage("nickname", input.value));
-  /* socket.send({
-    type: "nickname",
-    payload: input.value
-  });*/
-  console.log(input.value);
+  const input = form.querySelector("input");
+   //argument ->  1. 이벤트이름, 2. 보내고 싶은 payload, 3. 서버에서 호출하는 function
+  socket.emit("enter_room", { payload: input.value}, () => {
+    console.log("[FrontEnd] server is done!");
+  });
   input.value="";
+  // 1. 특정한 event 를 어떤 이름이든 상관없이 emit 해줄 수 있다.
+  // 2. JS object 를 전송할 수 있다.
+
 }
 
-messageForm.addEventListener("submit", handleSubmit);
-nickForm.addEventListener("submit", handleNickSubmit);
+form.addEventListener("submit", handleRoomSubmit);

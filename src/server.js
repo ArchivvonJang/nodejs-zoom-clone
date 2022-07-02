@@ -1,6 +1,7 @@
 import http from 'http';
-import WebSocket from 'ws';
+import SocketIO from "socket.io";
 import express from "express";
+import {isBrowsersQueryValid} from "@babel/preset-env/lib/targets-parser";
 
 const app = express();
 
@@ -19,45 +20,58 @@ const handleListen = () => console.log('Listening on ws && http://localhost:3000
 
 //server에서 websocket을 만들 수 있도록 준비
 //같은 서버에서 http, websocket 둘 다 작동하도록 http server 위에 websocket 서버 생성 
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
 
-//websocket server 생성  
-//http server를 사용하고 싶지 않을 때는 websocket server(아래)만 만들면 된다.
-// 여기서 서버를 전달해준다.
-const wss = new WebSocket.Server({ server });
+// -------------  socket io server 생성 (/socket.io/socket.io.js) -------------
+const wsServer = SocketIO(httpServer);
 
-function onSocketClose(){
-  console.log("[Back] Disconnected from the Browser");
-}
-
-//fake database 누군가 서버에 연결하면 해당 connection 담아준다.
-const sockets = [];
-
-wss.on("connection", (socket) => {
-  //브라우저에 연결될 때, 브라우저를 sockets array 에 담아준다.
-  sockets.push(socket);
-
-  socket["nickname"] = "Anony"; //익명으로 챗에 참여한 사람들의 닉네임을 설정
-  console.log("[Back] ✅ Connected to Browser");
-  socket.on("close", onSocketClose);
-  socket.on("message", (msg) => {
-
-    //JSON.stringify : convert javascript object to String
-    const message = JSON.parse(msg);
-
-    switch(message.type){
-      case "new_message":
-        //각 브라우저를 aSocket 으로 표시하고 메시지를 보낸다.
-        sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
-        break;
-      case "nickname":
-        //type : 메시지 종류, payload : 메시지에 담겨있는 중요한 정보들
-        //socket[여기에 정보를 저장할 수 있다. ]
-        socket["nickname"] = message.payload;
-        break;
-    }
+wsServer.on("connection", (socket) =>{
+  socket.on("enter_room", (msg, done) => {
+    console.log(msg);
+    setTimeout(() => {
+      done();
+    }, 10000);
   });
+
 });
 
-server.listen(3000, handleListen);
+// ------------- websocket server 생성 -------------
+// //http server를 사용하고 싶지 않을 때는 websocket server(아래)만 만들면 된다.
+// // 여기서 서버를 전달해준다.
+// const wss = new WebSocket.Server({ server });
+//
+// function onSocketClose(){
+//   console.log("[Back] Disconnected from the Browser");
+// }
+//
+// //fake database 누군가 서버에 연결하면 해당 connection 담아준다.
+// const sockets = [];
+//
+// wss.on("connection", (socket) => {
+//   //브라우저에 연결될 때, 브라우저를 sockets array 에 담아준다.
+//   sockets.push(socket);
+//
+//   socket["nickname"] = "Anony"; //익명으로 챗에 참여한 사람들의 닉네임을 설정
+//   console.log("[Back] ✅ Connected to Browser");
+//   socket.on("close", onSocketClose);
+//   socket.on("message", (msg) => {
+//
+//     //JSON.stringify : convert javascript object to String
+//     const message = JSON.parse(msg);
+//
+//     switch(message.type){
+//       case "new_message":
+//         //각 브라우저를 aSocket 으로 표시하고 메시지를 보낸다.
+//         sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}: ${message.payload}`));
+//         break;
+//       case "nickname":
+//         //type : 메시지 종류, payload : 메시지에 담겨있는 중요한 정보들
+//         //socket[여기에 정보를 저장할 수 있다. ]
+//         socket["nickname"] = message.payload;
+//         break;
+//     }
+//   });
+// });
+
+httpServer.listen(3000, handleListen);
 
