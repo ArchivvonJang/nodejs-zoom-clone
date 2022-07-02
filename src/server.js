@@ -26,11 +26,13 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) =>{
-  socket.on("enter_room", (msg, done) => {
-    console.log(msg);
+  socket.on("enter_room", (roomName, done) => {
+    console.log(roomName);
     setTimeout(() => {
-      done();
-    }, 10000);
+      //done()을 실행하면, 코드를 여기서 실행하는 것이 아니다. 신뢰하지 못한 코드를 실행시킬 수 있기 때문에
+      //front-end 에서 실행버튼을 눌러준다 -> back-end 가 front-end 에서 코드가 실행되도록 시킨다.
+      done("hello from the backend");
+    }, 15000);
   });
 
 });
