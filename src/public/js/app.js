@@ -8,11 +8,31 @@ room.hidden = true;
 
 let roomName;
 
+function addMessage(message){
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
+}
+
+function handleMessageSubmit(event){
+  event.preventDefault();
+  const input = room.querySelector("input");
+  const value = input.value;
+  //입력받은 메시지를 back-end로 보내준다.
+  socket.emit("new_message", input.value, roomName, () => {
+    addMessage(`You : ${value}`); //백엔드에서 시작시킬 수 있는 function
+  });
+  input.value = "";
+}
+
 function showRoom(){
   welcome.hidden = true;
   room.hidden = false;
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
+  const form = room.querySelector("form");
+  form.addEventListener("submit", handleMessageSubmit);
 };
 
 
@@ -33,3 +53,15 @@ function handleRoomSubmit(event){
 }
 
 form.addEventListener("submit", handleRoomSubmit);
+
+//새로운 참여자가 room에 들어오면 수행될 function
+socket.on("welcome", () => {
+  addMessage("someone joined.");
+});
+//참여자가 방을 나가면 수행하게 될 function
+socket.on("bye", () => {
+  addMessage("someone left.");
+});
+//메시지 확인
+socket.on("new_message", addMessage);
+//=== socket.on("new_message", (msg)=>{addMessage(msg)});

@@ -29,14 +29,23 @@ wsServer.on("connection", (socket) =>{
   socket.onAny((event) => {
     console.log(`Socket Event : ${event}`);
   });
+
+  //채팅방에 참가하고, 참가했다는 것을 모든 사람에게 알리기
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
-    //참가했다는 것을 모든 사람에게 알리기
-
     done();
-
+    socket.to(roomName).emit("welcome");
   });
 
+  //클라이언트가 서버와 연결이 끊어지기 전에 마지막에 굿바이 메시지 보내기
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach(room => socket.to(room).emit("bye"));
+  });
+
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", msg);
+    done();
+  });
 });
 
 // ------------- websocket server 생성 -------------
