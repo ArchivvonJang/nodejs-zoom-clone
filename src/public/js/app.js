@@ -57,7 +57,6 @@ function handleRoomSubmit(event){
   input.value="";
   // 1. 특정한 event 를 어떤 이름이든 상관없이 emit 해줄 수 있다.
   // 2. JS object 를 전송할 수 있다.
-
 }
 
 form.addEventListener("submit", handleRoomSubmit);
@@ -72,4 +71,18 @@ socket.on("bye", (left) => {
 });
 //메시지 확인
 socket.on("new_message", addMessage);
-//=== socket.on("new_message", (msg)=>{addMessage(msg)});
+//위와 동일 === socket.on("new_message", (msg)=>{addMessage(msg)});
+
+socket.on("room_change", (rooms) => {
+  roomList.innerHTML = '';
+  //room이 하나도 없을 때, 모든 것을 비워준다.
+  if(room.length === 0){
+    return;
+  }
+  const roomList = welcome.querySelector("ul");
+  rooms.forEach(room => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li);
+  })
+});

@@ -25,10 +25,26 @@ const httpServer = http.createServer(app);
 // -------------  socket io server 생성 (/socket.io/socket.io.js) -------------
 const wsServer = SocketIO(httpServer);
 
+function publicRooms(){
+  const { sockets: { adapter: { sids, rooms }, },} = wsServer;
+  /*위와 같다.
+  const sids = wsServer.sockets.adapter.sids;
+  const rooms = wsServer.sockets.adapter.rooms;*/
+
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if(sids.get(key) === undefined){
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+
 wsServer.on("connection", (socket) =>{
   //wsServer.socketsJoin("announcement"); 입장하면 바로 공지로 가게하기
   socket["nickname"] = "Anonymous";
   socket.onAny((event) => {
+    console.log(wsServer.sockets.adapter);
     console.log(`Socket Event : ${event}`);
   });
 
@@ -36,12 +52,19 @@ wsServer.on("connection", (socket) =>{
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
     done();
+    //메세지를 하나의 socket에만 보내기
     socket.to(roomName).emit("welcome", socket.nickname);
+    //메시지를 모든 socket에 보내주기
+    wsServer.sockets.emit("room_change", publicRooms());
   });
 
   //클라이언트가 서버와 연결이 끊어지기 전에 마지막에 굿바이 메시지 보내기
   socket.on("disconnecting", () => {
     socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname));
+  });
+  socket.on("disconnect", () => {
+    //모두에게 room이 변경되었다고 알리기 (방이 사라졌을수도 있음)
+    wsServer.sockets.emit("room_change", publicRooms());
   });
 
   socket.on("new_message", (msg, room, done) => {
