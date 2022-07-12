@@ -1,5 +1,6 @@
 import http from 'http';
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 import express from "express";
 import {isBrowsersQueryValid} from "@babel/preset-env/lib/targets-parser";
 
@@ -23,7 +24,15 @@ const handleListen = () => console.log('Listening on ws && http://localhost:3000
 const httpServer = http.createServer(app);
 
 // -------------  socket io server 생성 (/socket.io/socket.io.js) -------------
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true
+  }
+});
+instrument(wsServer, {
+  auth: false
+});
 
 function publicRooms(){
   const { sockets: { adapter: { sids, rooms }, },} = wsServer;
