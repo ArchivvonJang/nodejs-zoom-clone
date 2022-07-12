@@ -40,6 +40,10 @@ function publicRooms(){
   return publicRooms;
 }
 
+function countRoom(roomName){
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 wsServer.on("connection", (socket) =>{
   //wsServer.socketsJoin("announcement"); 입장하면 바로 공지로 가게하기
   socket["nickname"] = "Anonymous";
@@ -53,14 +57,14 @@ wsServer.on("connection", (socket) =>{
     socket.join(roomName);
     done();
     //메세지를 하나의 socket에만 보내기
-    socket.to(roomName).emit("welcome", socket.nickname);
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
     //메시지를 모든 socket에 보내주기
     wsServer.sockets.emit("room_change", publicRooms());
   });
 
   //클라이언트가 서버와 연결이 끊어지기 전에 마지막에 굿바이 메시지 보내기
   socket.on("disconnecting", () => {
-    socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname));
+    socket.rooms.forEach((room) => socket.to(room).emit("bye", socket.nickname, countRoom(room)- 1 ));
   });
   socket.on("disconnect", () => {
     //모두에게 room이 변경되었다고 알리기 (방이 사라졌을수도 있음)

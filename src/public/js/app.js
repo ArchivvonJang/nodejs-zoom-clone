@@ -62,11 +62,15 @@ function handleRoomSubmit(event){
 form.addEventListener("submit", handleRoomSubmit);
 
 //새로운 참여자가 room에 들어오면 수행될 function
-socket.on("welcome", (user) => {
+socket.on("welcome", (user, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`[ ${user} arrived. ]`);
 });
 //참여자가 방을 나가면 수행하게 될 function
-socket.on("bye", (left) => {
+socket.on("bye", (left, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`[ ${left} left. ]`);
 });
 //메시지 확인
